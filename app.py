@@ -1,99 +1,97 @@
-import streamlit as st
-import joblib
+# app.py
 
-st.set_page_config(
-    page_title="Patient Risk Classifier",
-    page_icon="🩺",
-    layout="centered"
+import streamlit as st
+import pandas as pd
+import joblib
+import os
+
+# === Load trained model safely ===
+MODEL_FILE = os.path.join(os.path.dirname(__file__), "risk_model.pkl")
+
+if not os.path.exists(MODEL_FILE):
+    st.error(f"Model file '{MODEL_FILE}' not found. Run train_model.py first.")
+    st.stop()
+
+model = joblib.load(MODEL_FILE)
+
+# === Mapping for categorical variables ===
+consciousness_map = {"A": 0, "V": 1, "P": 2, "U": 3}
+
+# === CSS for hospital theme ===
+st.markdown(
+    """
+    <style>
+    body {
+        background-color: #f0f4f8;
+    }
+    .stApp {
+        font-family: "Arial", sans-serif;
+        color: #0c3c60;
+    }
+    .title {
+        color: #0077b6;
+        font-size: 36px;
+        font-weight: bold;
+        text-align: center;
+        padding-bottom: 20px;
+    }
+    .section-header {
+        color: #023e8a;
+        font-size: 24px;
+        font-weight: bold;
+        padding-top: 15px;
+    }
+    .stButton>button {
+        background-color: #0077b6;
+        color: white;
+        font-weight: bold;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
-# Load model
-model = joblib.load("risk_model.pkl")
+# === Title ===
+st.markdown('<div class="title">🏥 Hospital Health Risk Checker</div>', unsafe_allow_html=True)
 
-# ====== CSS for hospital theme ======
-hospital_css = """
-<style>
-body {
-    background-color: #f2f8ff;
-}
-.main > div {
-    background: #ffffff;
-    padding: 25px 40px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-h1 {
-    color: #004d99 !important;
-    font-weight: 700 !important;
-}
-label {
-    font-size: 17px !important;
-    font-weight: 600 !important;
-}
-.stButton>button {
-    background-color: #0077cc;
-    color: white;
-    border-radius: 8px;
-    padding: 10px 22px;
-    font-size: 17px;
-}
-.stButton>button:hover {
-    background-color: #005fa3;
-}
-.result-box {
-    padding: 20px;
-    border-radius: 12px;
-    font-size: 22px;
-    font-weight: bold;
-    text-align: center;
-}
-.low { background-color: #cfffd0; color: #006600; }
-.med { background-color: #fff7c4; color: #806600; }
-.high { background-color: #ffd0d0; color: #800000; }
-</style>
-"""
+# === Input Form ===
+with st.form("risk_form"):
+    st.markdown('<div class="section-header">Patient Vitals</div>', unsafe_allow_html=True)
+    
+    respiratory_rate = st.number_input("Respiratory Rate", min_value=0.0, step=0.1)
+    oxygen_saturation = st.number_input("Oxygen Saturation (%)", min_value=0.0, max_value=100.0, step=0.1)
+    o2_scale = st.selectbox("O2 Scale", options=[1, 2])
+    systolic_bp = st.number_input("Systolic BP", min_value=0.0, step=0.1)
+    heart_rate = st.number_input("Heart Rate", min_value=0.0, step=0.1)
+    temperature = st.number_input("Temperature (°C)", min_value=25.0, max_value=45.0, step=0.1)
+    consciousness = st.selectbox("Consciousness", options=["A", "V", "P", "U"])
+    on_oxygen = st.selectbox("On Oxygen", options=[0, 1])
+    
+    submitted = st.form_submit_button("Check Risk")
 
-st.markdown(hospital_css, unsafe_allow_html=True)
-
-# Title
-st.title("🩺 Patient Risk Classification")
-st.write("Enter the patient's vital signs to estimate clinical risk level.")
-
-# ===== Input fields =====
-Respiratory_Rate = st.number_input("Respiratory Rate", step=1.0)
-Oxygen_Saturation = st.number_input("Oxygen Saturation (%)", step=1.0)
-Systolic_BP = st.number_input("Systolic Blood Pressure", step=1.0)
-Heart_Rate = st.number_input("Heart Rate", step=1.0)
-Temperature = st.number_input("Temperature (°F)", step=0.1)
-
-O2_Scale = st.selectbox("O2 Scale", [1, 2])
-Consciousness = st.selectbox("Consciousness (AVPU scale)", ["A", "V", "P", "U"])
-On_Oxygen = st.selectbox("On Oxygen?", [0, 1])
-
-# Encode consciousness
-consciousness_map = {"A": 0, "V": 1, "P": 2, "U": 3}
-Consciousness_Code = consciousness_map[Consciousness]
-
-# ===== Prediction =====
-if st.button("Predict Risk Level"):
-    X = [[
-        Respiratory_Rate,
-        Oxygen_Saturation,
-        O2_Scale,
-        Systolic_BP,
-        Heart_Rate,
-        Temperature,
-        Consciousness_Code,
-        On_Oxygen
-    ]]
-
-    risk = model.predict(X)[0]
-
-    st.subheader("Predicted Risk Level")
-
-    if risk == 0:
-        st.markdown('<div class="result-box low">🟢 LOW RISK</div>', unsafe_allow_html=True)
-    elif risk == 1:
-        st.markdown('<div class="result-box med">🟡 MEDIUM RISK</div>', unsafe_allow_html=True)
+# === Prediction ===
+if submitted:
+    # Encode categorical inputs
+    consciousness_encoded = consciousness_map[consciousness]
+    
+    input_data = pd.DataFrame([{
+        "Respiratory_Rate": respiratory_rate,
+        "Oxygen_Saturation": oxygen_saturation,
+        "O2_Scale": o2_scale,
+        "Systolic_BP": systolic_bp,
+        "Heart_Rate": heart_rate,
+        "Temperature": temperature,
+        "Consciousness": consciousness_encoded,
+        "On_Oxygen": on_oxygen
+    }])
+    
+    risk_prediction = model.predict(input_data)[0]
+    
+    st.markdown('<div class="section-header">Predicted Risk Level</div>', unsafe_allow_html=True)
+    
+    if risk_prediction.lower() == "high":
+        st.error(f"⚠️ {risk_prediction}")
+    elif risk_prediction.lower() == "medium":
+        st.warning(f"⚠️ {risk_prediction}")
     else:
-        st.markdown('<div class="result-box high">🔴 HIGH RISK</div>', unsafe_allow_html=True)
+        st.success(f"✅ {risk_prediction}")
