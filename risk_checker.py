@@ -1,73 +1,73 @@
+# risk_checker.py
+
 import joblib
+import pandas as pd
+import os
 
-# Simple numeric input (no bounds)
-def get_number(prompt, integer=False):
+MODEL_FILE = "risk_model.pkl"
+
+# === Load trained model safely ===
+if not os.path.exists(MODEL_FILE):
+    print(f"Error: Model file '{MODEL_FILE}' not found. Run train_model.py first.")
+    exit(1)
+
+model = joblib.load(MODEL_FILE)
+
+# === Mapping for categorical variables ===
+consciousness_map = {"A": 0, "V": 1, "P": 2, "U": 3}
+
+# === Helper function for validated input ===
+def get_input(prompt, valid_values=None, val_type=float):
     while True:
+        val = input(prompt)
         try:
-            value = float(input(prompt))
-            if integer:
-                value = int(value)
-            return value
+            val_casted = val_type(val)
+            if valid_values is not None and val_casted not in valid_values:
+                print(f"Invalid input! Must be one of {valid_values}.")
+            else:
+                return val_casted
         except ValueError:
-            print("❌ Error: Please enter a valid number.\n")
+            print(f"Invalid input! Must be of type {val_type.__name__}.")
 
-# For inputs with fixed allowed values
-def get_choice(prompt, choices):
-    choices_display = "/".join(choices)
-    while True:
-        value = input(f"{prompt} ({choices_display}): ").strip().upper()
-        if value not in choices:
-            print(f"❌ Error: Must be one of: {choices_display}. Please try again.\n")
-        else:
-            return value
-
-
+# === Main function ===
 def main():
-    model = joblib.load("risk_model.pkl")
-
-    print("\n--- Patient Risk Checker ---\n")
-
-    # No bounds on these:
-    Respiratory_Rate = get_number("Enter Respiratory Rate: ")
-    Oxygen_Saturation = get_number("Enter Oxygen Saturation %: ")
-    Systolic_BP = get_number("Enter Systolic Blood Pressure: ")
-    Heart_Rate = get_number("Enter Heart Rate: ")
-    Temperature = get_number("Enter Temperature (°F): ")
-
-    # ONLY THESE HAVE BOUNDS:
-
-    # O2 Scale must be 1 or 2
-    O2_Scale = get_choice("Enter O2 Scale", ["1", "2"])
-    O2_Scale = int(O2_Scale)
-
-    # Consciousness must be A, V, P, or U
-    Consciousness = get_choice("Enter Consciousness", ["A", "V", "P", "U"])
-
-    # On Oxygen must be 0 or 1
-    On_Oxygen = get_choice("Is the patient on oxygen?", ["0", "1"])
-    On_Oxygen = int(On_Oxygen)
-
-    # Encode consciousness
-    consciousness_map = {"A": 0, "V": 1, "P": 2, "U": 3}
-    Consciousness_Code = consciousness_map[Consciousness]
-
-    # Prepare input
-    X = [[
-        Respiratory_Rate,
-        Oxygen_Saturation,
-        O2_Scale,
-        Systolic_BP,
-        Heart_Rate,
-        Temperature,
-        Consciousness_Code,
-        On_Oxygen
-    ]]
-
-    predicted_risk = model.predict(X)[0]
-
-    print("\n--- Prediction Complete ---")
-    print(f"Predicted Risk Level: {predicted_risk}\n")
-
+    print("=== Health Risk Checker ===")
+    
+    # Numeric vitals
+    respiratory_rate = get_input("Respiratory Rate: ", val_type=float)
+    oxygen_saturation = get_input("Oxygen Saturation: ", val_type=float)
+    o2_scale = get_input("O2 Scale (1 or 2): ", valid_values=[1, 2], val_type=int)
+    systolic_bp = get_input("Systolic BP: ", val_type=float)
+    heart_rate = get_input("Heart Rate: ", val_type=float)
+    temperature = get_input("Temperature: ", val_type=float)
+    
+    # Categorical vitals
+    while True:
+        consciousness = input("Consciousness (A, V, P, U): ").upper()
+        if consciousness in consciousness_map:
+            consciousness_encoded = consciousness_map[consciousness]
+            break
+        else:
+            print("Invalid input! Must be one of A, V, P, U.")
+    
+    on_oxygen = get_input("On Oxygen (0 = No, 1 = Yes): ", valid_values=[0, 1], val_type=int)
+    
+    # Prepare DataFrame for prediction
+    input_data = pd.DataFrame([{
+        "Respiratory_Rate": respiratory_rate,
+        "Oxygen_Saturation": oxygen_saturation,
+        "O2_Scale": o2_scale,
+        "Systolic_BP": systolic_bp,
+        "Heart_Rate": heart_rate,
+        "Temperature": temperature,
+        "Consciousness": consciousness_encoded,
+        "On_Oxygen": on_oxygen
+    }])
+    
+    # Predict risk level
+    risk_prediction = model.predict(input_data)[0]
+    
+    print(f"\nPredicted Risk Level: {risk_prediction}")
 
 if __name__ == "__main__":
     main()
