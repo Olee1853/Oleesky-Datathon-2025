@@ -56,7 +56,7 @@ def set_background_local(image_file):
 set_background_local("ocean.jpg")
 
 # Title
-st.markdown('<h1 style="color:#0077b6;text-align:center;">🏥 Health Risk Checker</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="color:#0077b6;text-align:center;">HealthSense</h1>', unsafe_allow_html=True)
 
 # Input form
 with st.form("risk_form"):
