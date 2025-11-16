@@ -31,8 +31,8 @@ def set_background_local(image_file):
             background-position: center;
             background-attachment: fixed;
         }}
-        
-        /* Button styling */
+
+        /* Buttons styling */
         .stButton>button {{
             background-color: #0077b6;
             color: white;
@@ -65,13 +65,13 @@ with st.form("risk_form"):
     respiratory_rate = st.number_input("Respiratory Rate", min_value=0.0, step=0.1)
     oxygen_saturation = st.number_input("Oxygen Saturation (%)", min_value=0.0, max_value=100.0, step=0.1)
     
-    # Fully white dropdown replacements
-    o2_scale = st.select_slider("O2 Scale", options=[1, 2], value=1)
+    # Drop-down menus (no sliders)
+    o2_scale = st.selectbox("O2 Scale", options=[1, 2])
     systolic_bp = st.number_input("Systolic BP", min_value=0.0, step=0.1)
     heart_rate = st.number_input("Heart Rate", min_value=0.0, step=0.1)
     temperature = st.number_input("Temperature (°C)", min_value=25.0, max_value=45.0, step=0.1)
-    consciousness = st.select_slider("Consciousness", options=["A","V","P","U"], value="A")
-    on_oxygen = st.select_slider("On Oxygen", options=[0,1], value=0)
+    consciousness = st.selectbox("Consciousness", options=["A", "V", "P", "U"])
+    on_oxygen = st.selectbox("On Oxygen", options=[0, 1])
     
     submitted = st.form_submit_button("Check Risk")
 
