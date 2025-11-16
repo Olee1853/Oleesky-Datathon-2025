@@ -1,23 +1,20 @@
-# app.py
-
 import streamlit as st
 import pandas as pd
 import joblib
 import os
 import base64
 
-# === Load trained model safely ===
-MODEL_FILE = os.path.join(os.path.dirname(__file__), "risk_model.pkl")
+# Load model
+MODEL_FILE = "risk_model.pkl"
 if not os.path.exists(MODEL_FILE):
-    st.error(f"Model file '{MODEL_FILE}' not found. Run train_model.py first.")
+    st.error(f"Model '{MODEL_FILE}' not found. Run train_model.py first.")
     st.stop()
-
 model = joblib.load(MODEL_FILE)
 
-# === Map categorical variables ===
+# Map categorical variables
 consciousness_map = {"A": 0, "V": 1, "P": 2, "U": 3}
 
-# === Function to set local background image ===
+# Function to set background
 def set_background_local(image_file):
     with open(image_file, "rb") as f:
         data = f.read()
@@ -25,78 +22,59 @@ def set_background_local(image_file):
     st.markdown(
         f"""
         <style>
-        /* Background image */
         .stApp {{
             background-image: url("data:image/jpg;base64,{encoded}");
             background-size: cover;
             background-position: center;
-            background-attachment: fixed;
         }}
-
-        /* White form container with no transparency */
         .form-container {{
-            background-color: #ffffff !important;
+            background-color: #ffffff;
             padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-top: -40px;
         }}
-
-        /* Make all inputs and selectboxes white with black text */
-        div[role="listbox"], .stTextInput>div>input, .stNumberInput>div>input {{
-            background-color: #ffffff !important;
-            color: #000000 !important;
+        .section-header {{
+            color: #023e8a;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
         }}
-
-        div[role="option"] {{
-            background-color: #ffffff !important;
-            color: #000000 !important;
-        }}
-
-        /* Buttons styling */
         .stButton>button {{
             background-color: #0077b6;
             color: white;
             font-weight: bold;
         }}
-
-        /* Section headers */
-        .section-header {{
-            color: #023e8a;
-            font-size: 24px;
-            font-weight: bold;
-            padding-top: 15px;
-            margin-bottom: 10px;
-        }}
         </style>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
-# === Set ocean background ===
 set_background_local("ocean.jpg")
 
-# === Title ===
 st.markdown('<h1 style="color:#0077b6;text-align:center;">🏥 Health Risk Checker</h1>', unsafe_allow_html=True)
 
-# === Form with white background ===
+# Form container
 st.markdown('<div class="form-container">', unsafe_allow_html=True)
+
 with st.form("risk_form"):
     st.markdown('<div class="section-header">Patient Vitals</div>', unsafe_allow_html=True)
     
     respiratory_rate = st.number_input("Respiratory Rate", min_value=0.0, step=0.1)
     oxygen_saturation = st.number_input("Oxygen Saturation (%)", min_value=0.0, max_value=100.0, step=0.1)
-    o2_scale = st.selectbox("O2 Scale", options=[1, 2])
+    
+    # Use select_slider instead of selectbox for fully white appearance
+    o2_scale = st.select_slider("O2 Scale", options=[1,2], value=1)
     systolic_bp = st.number_input("Systolic BP", min_value=0.0, step=0.1)
     heart_rate = st.number_input("Heart Rate", min_value=0.0, step=0.1)
     temperature = st.number_input("Temperature (°C)", min_value=25.0, max_value=45.0, step=0.1)
-    consciousness = st.selectbox("Consciousness", options=["A", "V", "P", "U"])
-    on_oxygen = st.selectbox("On Oxygen", options=[0, 1])
+    consciousness = st.select_slider("Consciousness", options=["A","V","P","U"], value="A")
+    on_oxygen = st.select_slider("On Oxygen", options=[0,1], value=0)
     
     submitted = st.form_submit_button("Check Risk")
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# === Prediction ===
+# Prediction
 if submitted:
     consciousness_encoded = consciousness_map[consciousness]
     input_data = pd.DataFrame([{
@@ -111,8 +89,8 @@ if submitted:
     }])
     
     risk_prediction = model.predict(input_data)[0]
-    
     st.markdown('<div class="section-header">Predicted Risk Level</div>', unsafe_allow_html=True)
+    
     if risk_prediction.lower() == "high":
         st.error(f"⚠️ {risk_prediction}")
     elif risk_prediction.lower() == "medium":
