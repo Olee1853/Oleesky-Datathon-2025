@@ -31,7 +31,7 @@ def get_input(prompt, valid_values=None, val_type=float):
 
 # === Main function ===
 def main():
-    print("=== Health Risk Checker ===")
+    print("=== HealthSense ===")
     
     # Numeric vitals
     respiratory_rate = get_input("Respiratory Rate: ", val_type=float)
