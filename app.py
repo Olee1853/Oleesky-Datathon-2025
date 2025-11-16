@@ -4,7 +4,7 @@ import joblib
 import os
 import base64
 
-# === Load trained model safely ===
+# === Load model safely ===
 MODEL_FILE = os.path.join(os.path.dirname(__file__), "risk_model.pkl")
 if not os.path.exists(MODEL_FILE):
     st.error(f"Model file '{MODEL_FILE}' not found. Run train_model.py first.")
@@ -12,11 +12,12 @@ if not os.path.exists(MODEL_FILE):
 
 model = joblib.load(MODEL_FILE)
 
-# === Map categorical variables ===
+# === Mapping categorical variables ===
 consciousness_map = {"A": 0, "V": 1, "P": 2, "U": 3}
 
-# === Embed local image as background ===
+# === Set local image as background ===
 def set_background_local(image_file):
+    """Set a local image as Streamlit background using base64."""
     with open(image_file, "rb") as f:
         data = f.read()
     encoded = base64.b64encode(data).decode()
@@ -35,11 +36,11 @@ def set_background_local(image_file):
         unsafe_allow_html=True
     )
 
-# Call function with your local image
-set_background_local("grass.jpg")  # must be in same folder
+# Use ocean.jpg as background
+set_background_local("ocean.jpg")
 
 # === Title ===
-st.markdown('<h1 style="color:#0077b6;text-align:center;">Health Risk Checker</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="color:#0077b6;text-align:center;">🏥 Health Risk Checker</h1>', unsafe_allow_html=True)
 
 # === Input Form ===
 with st.form("risk_form"):
@@ -50,27 +51,4 @@ with st.form("risk_form"):
     heart_rate = st.number_input("Heart Rate", min_value=0.0, step=0.1)
     temperature = st.number_input("Temperature (°C)", min_value=25.0, max_value=45.0, step=0.1)
     consciousness = st.selectbox("Consciousness", options=["A", "V", "P", "U"])
-    on_oxygen = st.selectbox("On Oxygen", options=[0, 1])
-    submitted = st.form_submit_button("Check Risk")
-
-if submitted:
-    consciousness_encoded = consciousness_map[consciousness]
-    input_data = pd.DataFrame([{
-        "Respiratory_Rate": respiratory_rate,
-        "Oxygen_Saturation": oxygen_saturation,
-        "O2_Scale": o2_scale,
-        "Systolic_BP": systolic_bp,
-        "Heart_Rate": heart_rate,
-        "Temperature": temperature,
-        "Consciousness": consciousness_encoded,
-        "On_Oxygen": on_oxygen
-    }])
-    
-    risk_prediction = model.predict(input_data)[0]
-    
-    if risk_prediction.lower() == "high":
-        st.error(f"⚠️ {risk_prediction}")
-    elif risk_prediction.lower() == "medium":
-        st.warning(f"⚠️ {risk_prediction}")
-    else:
-        st.success(f"✅ {risk_prediction}")
+    o
