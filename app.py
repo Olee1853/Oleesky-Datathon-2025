@@ -25,6 +25,7 @@ def set_background_local(image_file):
     st.markdown(
         f"""
         <style>
+        /* Background image */
         .stApp {{
             background-image: url("data:image/jpg;base64,{encoded}");
             background-size: cover;
@@ -32,21 +33,26 @@ def set_background_local(image_file):
             background-attachment: fixed;
             backdrop-filter: blur(5px);
         }}
-        /* Off-white dropdowns and inputs */
-        div[role="listbox"] {{
-            background-color: #f8f8f8 !important;
-            color: #000000 !important;
+
+        /* Light-themed selectboxes and inputs */
+        div[role="listbox"], .stTextInput>div>input {{
+            background-color: #fdfdfd !important;
+            color: #000 !important;
         }}
-        input {{
-            background-color: #f8f8f8 !important;
-            color: #000000 !important;
+
+        /* Make the selected option visible */
+        div[role="option"] {{
+            background-color: #fdfdfd !important;
+            color: #000 !important;
         }}
+
         /* Buttons styling */
         .stButton>button {{
             background-color: #0077b6;
             color: white;
             font-weight: bold;
         }}
+
         /* Section headers */
         .section-header {{
             color: #023e8a;
@@ -72,7 +78,7 @@ with st.form("risk_form"):
     respiratory_rate = st.number_input("Respiratory Rate", min_value=0.0, step=0.1)
     oxygen_saturation = st.number_input("Oxygen Saturation (%)", min_value=0.0, max_value=100.0, step=0.1)
     
-    # Only 1 or 2 allowed
+    # Only 1 or 2 allowed for O2 Scale
     o2_scale = st.selectbox("O2 Scale", options=[1, 2])
     
     systolic_bp = st.number_input("Systolic BP", min_value=0.0, step=0.1)
@@ -89,7 +95,6 @@ with st.form("risk_form"):
 
 # === Prediction ===
 if submitted:
-    # Encode categorical inputs
     consciousness_encoded = consciousness_map[consciousness]
     
     input_data = pd.DataFrame([{
