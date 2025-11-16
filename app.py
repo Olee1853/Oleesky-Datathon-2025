@@ -33,11 +33,23 @@ def set_background_local(image_file):
             background-attachment: fixed;
         }}
 
-        /* Overlay container to make inputs readable */
+        /* White form container with no transparency */
         .form-container {{
-            background-color: rgba(255, 255, 255, 0.85);
+            background-color: #ffffff !important;
             padding: 20px;
             border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }}
+
+        /* Make all inputs and selectboxes white with black text */
+        div[role="listbox"], .stTextInput>div>input, .stNumberInput>div>input {{
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }}
+
+        div[role="option"] {{
+            background-color: #ffffff !important;
+            color: #000000 !important;
         }}
 
         /* Buttons styling */
@@ -53,19 +65,20 @@ def set_background_local(image_file):
             font-size: 24px;
             font-weight: bold;
             padding-top: 15px;
+            margin-bottom: 10px;
         }}
         </style>
         """,
         unsafe_allow_html=True
     )
 
-# Set ocean background
+# === Set ocean background ===
 set_background_local("ocean.jpg")
 
 # === Title ===
 st.markdown('<h1 style="color:#0077b6;text-align:center;">🏥 Health Risk Checker</h1>', unsafe_allow_html=True)
 
-# === Form with light background ===
+# === Form with white background ===
 st.markdown('<div class="form-container">', unsafe_allow_html=True)
 with st.form("risk_form"):
     st.markdown('<div class="section-header">Patient Vitals</div>', unsafe_allow_html=True)
