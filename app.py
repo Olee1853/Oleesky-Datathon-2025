@@ -1,20 +1,23 @@
+# app.py
+
 import streamlit as st
 import pandas as pd
 import joblib
 import os
 import base64
 
-# Load model
+# === Load trained model safely ===
 MODEL_FILE = "risk_model.pkl"
 if not os.path.exists(MODEL_FILE):
     st.error(f"Model '{MODEL_FILE}' not found. Run train_model.py first.")
     st.stop()
+
 model = joblib.load(MODEL_FILE)
 
 # Map categorical variables
 consciousness_map = {"A": 0, "V": 1, "P": 2, "U": 3}
 
-# Set background
+# Function to set background image
 def set_background_local(image_file):
     with open(image_file, "rb") as f:
         data = f.read()
@@ -26,20 +29,17 @@ def set_background_local(image_file):
             background-image: url("data:image/jpg;base64,{encoded}");
             background-size: cover;
             background-position: center;
+            background-attachment: fixed;
         }}
-
-        /* Make the visible area of selectboxes white */
-        div[role="combobox"] > div {{
-            background-color: #ffffff !important;
-            color: #000000 !important;
-        }}
-
+        
+        /* Button styling */
         .stButton>button {{
             background-color: #0077b6;
             color: white;
             font-weight: bold;
         }}
 
+        /* Section headers */
         .section-header {{
             color: #023e8a;
             font-size: 24px;
@@ -52,6 +52,7 @@ def set_background_local(image_file):
         unsafe_allow_html=True,
     )
 
+# Set ocean background
 set_background_local("ocean.jpg")
 
 # Title
@@ -64,13 +65,13 @@ with st.form("risk_form"):
     respiratory_rate = st.number_input("Respiratory Rate", min_value=0.0, step=0.1)
     oxygen_saturation = st.number_input("Oxygen Saturation (%)", min_value=0.0, max_value=100.0, step=0.1)
     
-    # Selectboxes remain, but visible area will be white
-    o2_scale = st.selectbox("O2 Scale", options=[1, 2])
+    # Fully white dropdown replacements
+    o2_scale = st.select_slider("O2 Scale", options=[1, 2], value=1)
     systolic_bp = st.number_input("Systolic BP", min_value=0.0, step=0.1)
     heart_rate = st.number_input("Heart Rate", min_value=0.0, step=0.1)
     temperature = st.number_input("Temperature (°C)", min_value=25.0, max_value=45.0, step=0.1)
-    consciousness = st.selectbox("Consciousness", options=["A", "V", "P", "U"])
-    on_oxygen = st.selectbox("On Oxygen", options=[0, 1])
+    consciousness = st.select_slider("Consciousness", options=["A","V","P","U"], value="A")
+    on_oxygen = st.select_slider("On Oxygen", options=[0,1], value=0)
     
     submitted = st.form_submit_button("Check Risk")
 
